@@ -1,0 +1,3 @@
+[submodule "Devops/Docs/Doxygen-Dark-Theme"]
+	path = Devops/Docs/Doxygen-Dark-Theme
+	url = https://github.com/esNaglfar/Doxygen-Dark-Theme.git
