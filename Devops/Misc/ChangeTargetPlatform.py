@@ -1,6 +1,9 @@
 import os, fnmatch
 import xml.etree.ElementTree as ET
 
+
+### SETTINGS ###
+
 TargetVersion = 'v4.8'
 
 FilesToCheck = [
@@ -16,6 +19,9 @@ VersionsToCheck = [
     'v4.0'
 ]
 
+UE_SOURCE_PATH = r"U:\UnrealEngine\UnrealEngine"
+
+###################################################################
 def GetValue(line):
     
     return line.split('>')[1].split('<')[0]
@@ -39,7 +45,6 @@ def CheckFile(filepath):
             print("interesting version - ", GetValue(line), " - detected in : ", os.path.basename(filepath))
 
         if("<TargetFrameworkVersion>" in line and GetValue(line) in VersionsToReplace):
-            
             file.close()
             return [1,line]
             
@@ -59,17 +64,16 @@ def ModifyFile(filepath):
                     line = line.replace(version,TargetVersion)
                 output.write(line)
     os.replace(newFile,filepath)    
-    
+###################################################################################    
 
-### Старт тут ###
+### Старт тут ###---------------------------------------------
 rowcount = 0
 
-filePathList = FindAllFiles("U:/UE_5_Source","*.csproj")
+filePathList = FindAllFiles(UE_SOURCE_PATH,"*.csproj")
 
 filesToModify = []
 versions = []
 
-print(len(filePathList))
 print("Checking files...")
 
 for filepath in filePathList:
@@ -84,11 +88,7 @@ for filepath in filePathList:
 
 print("Modifying files...")
 
-for version in versions:
-    print(version)
-
 for file in filesToModify:
-    print(os.path.basename(file))
     ModifyFile(file)
 
 
