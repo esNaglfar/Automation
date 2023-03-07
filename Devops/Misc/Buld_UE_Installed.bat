@@ -1,7 +1,7 @@
 @echo off
 
-set UE_SOURCES_PATH=D:\UnrealEngines\Sources\5.1\
-set UE_BUILD_DIR=D:\UnrealEngines\Binaries\5.1\
+set UE_SOURCES_PATH="U:\UnrealEngine\"
+set UE_BUILD_DIR="U:\UE_Engine_InstalledBuild\"
         
 
         echo UE_BUILD_DIR - %UE_BUILD_DIR% 
@@ -19,3 +19,5 @@ set UE_BUILD_DIR=D:\UnrealEngines\Binaries\5.1\
                 -set:WithServer=true 
                 -set:WithFullDebugInfo=true 
                 -set:BuiltDirectory=%UE_BUILD_DIR%
+
+        pause
