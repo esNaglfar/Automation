@@ -1,0 +1,70 @@
+def ColorFromBuildResuld(result){
+    if("${result}" == 'SUCCESS') return '#18A558'
+    if("${result}" == 'ABORTED') return '#6e6e6e'
+    if("${result}" == 'UNSTABLE') return '#fcba03'
+    return '#FF0000'
+}
+
+pipeline {
+    agent {
+        node {
+            label ""
+            customWorkspace "$BUILD_DIR"
+        }
+    }
+
+
+/* ENVIRONMENT
+UE_SOURCES_PATH = d:\UnrealEngines\Sources\5.1\
+SLACK_CHANNEL = jenkins-jobs
+*/
+
+stages{
+    stage('Slack message') {
+        steps 
+        {
+            slackSend channel: "$SLACK_CHANNEL",
+            color:"$currentBuild.previousBuild" == 'null' ? '#18A558' : ColorFromBuildResuld("$currentBuild.previousBuild.result"),
+            message:"Build started: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+    }
+
+    stage('Build Engine')
+    {
+        steps
+        {
+            bat '''
+                "%UE_SOURCES_PATH%\\Engine\\Binaries\\DotNET\\AutomationTool\\AutomationTool.exe" ^
+                BuildGraph ^
+                -target="Make Installed Build Win64" ^
+                -script="%UE_SOURCES_PATH%\\Engine\\Build\\InstalledEngineBuild.xml"
+                -clean ^
+                -TargetPlatforms=Win64 ^
+                -set:HostPlatformOnly=true ^
+                -set:WithClient=true ^
+                -set:WithServer=true ^
+                -set:WithDDC=false ^
+                -set:WithLinux=false ^
+                -set:WithMac=false ^
+                -set:WithIOS=false ^
+                -set:WithTVOS=false ^
+                -set:WithLinuxArm64=false ^
+                -set:WithAndroid=false ^
+                -set:WithWithMacArm64=false ^
+                -set:WithFullDebugInfo=true ^
+                -set:BuiltDirectory=%BUILD_DIR%
+            '''
+        }
+    }
+
+}
+
+    post {
+        always {
+            slackSend channel: "$SLACK_CHANNEL",
+            color:ColorFromBuildResuld("$currentBuild.currentResult"),
+            message:"Build $currentBuild.currentResult: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+    }
+
+}

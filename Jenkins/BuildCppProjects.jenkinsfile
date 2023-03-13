@@ -1,0 +1,78 @@
+def ColorFromBuildResuld(result){
+    if("${result}" == 'SUCCESS') return '#18A558'
+    if("${result}" == 'ABORTED') return '#6e6e6e'
+    if("${result}" == 'UNSTABLE') return '#fcba03'
+    return '#FF0000'
+}
+
+
+/* PARAMETERS
+PROJECT_DIRECTORY =d:\\Unreal Projects\\
+PROJECT_NAME = ProjectBuildTest
+ATCHIVE_DIRECTORY =d:\\Builded
+SLACK_CHANNEL = jenkins-jobs
+UAT_PATH = c:\\Program Files\\Epic Games\\UE_5.1\\Engine\\Build\\BatchFiles\\RunUAT.bat
+UAT_BUILD_FLAGS = -build -cook -stage -archive -allmaps -pak -package
+UAT_PLATFORM = Win64
+UAT_CLIENTCONFIG = Development
+
+*/
+
+pipeline{
+
+    agent {
+        node {
+            label ""
+            customWorkspace "$ARCHIVE_DIRECTORY"
+        }
+    }
+
+
+    stages{
+
+        stage("Clang-format")
+        {
+            steps
+            {
+                bat'''
+                @echo off
+                FOR /R %%f IN (*.cs, *.h, *.cpp)^
+                DO( ^
+                clang-format -i %%f
+                ) ^
+                PAUSE 
+                '''
+            }
+        }
+       
+        stage("Building project"){
+            steps
+            {
+                slackSend channel: "$SLACK_CHANNEL",
+                color:"$currentBuild.previousBuild" == 'null' ? '#18A558' : ColorFromBuildResuld("$currentBuild.previousBuild.result"),
+                message:"Game ($PROJECT_NAME) build started: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+
+                bat '''
+                "%UAT_PATH%" ^
+                BuildCookRun ^
+                -project="%PROJECT_DIRECTORY%\\%PROJECT_NAME%\\%PROJECT_NAME%.uproject" ^
+                -platform=%UAT_PLATFORM% -clientconfig=%BUILD_MODE% ^
+                -archivedirectory="%ARCHIVE_DIRECTORY%"//"%PROJECT_NAME%//%BUILD_MODE%//"Build_"%BUILD_NUMBER%" ^
+                %UAT_BUILD_FLAGS%
+            '''
+
+            }
+        }
+    }
+
+    post 
+    {
+        always 
+        {
+            slackSend channel: "$SLACK_CHANNEL",
+                color:ColorFromBuildResuld("$currentBuild.currentResult"),
+                message:"Build $currentBuild.currentResult: ${env.JOB_NAME} #${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+    }
+}
+
